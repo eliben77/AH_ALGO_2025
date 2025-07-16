@@ -136,4 +136,3 @@ We compare `f(n)` to `n^log_b(a)`:
 
 ---
 
-*Prepared for use in academic courses on algorithms and data structures.*
