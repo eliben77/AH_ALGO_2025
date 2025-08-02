@@ -1,6 +1,6 @@
-# ✅ Detailed Solutions – Greedy Algorithms Practice
+# ✅ In-Depth Solutions – Greedy Algorithms Practice
 
-This document provides comprehensive solutions and justifications for greedy algorithm problems.
+This document provides highly detailed solutions with formal reasoning, math, and example analysis for greedy algorithms.
 
 ---
 
@@ -9,94 +9,105 @@ This document provides comprehensive solutions and justifications for greedy alg
 ### 1. ⛽ Refueling Scheduling Problem
 
 **Problem:**  
-You are given `N` cars, each requiring a refueling time `Time[i]`. Schedule them to minimize the **total waiting time** of all cars.
+You are given a list `Time[0..n-1]` of refueling times for `n` cars. You need to determine the order to refuel them so that the **total waiting time** is minimized.
 
 **Greedy Algorithm:**  
-Sort cars by increasing refueling time and serve them in that order.
+Sort the array `Time[]` in non-decreasing order. Refuel cars in that order.
 
 **Why it works:**  
-- If shorter refueling tasks are served first, then all later cars wait less.
-- This minimizes the **sum of completion times** (classic scheduling problem).
+Let `T[i]` be the time of the `i`-th car in the sorted list.  
+Total waiting time is:
+\[
+\text{Total} = \sum_{i=0}^{n-1} \sum_{j=0}^{i} T[j] = T[0](n) + T[1](n-1) + \dots + T[n-1](1)
+\]
+Thus, assigning smaller times earlier reduces the impact of larger values.
 
 **Proof (Exchange Argument):**  
-If two cars `i` and `j` are in the wrong order (`Time[i] > Time[j]` but `i` is scheduled before `j`), swapping them reduces the total waiting time.
+If we have a pair of adjacent cars `i` and `j` such that `T[i] > T[j]`, swapping them reduces the total wait. Applying such swaps leads to a sorted list — the optimal order.
 
 **Time Complexity:**  
-- Sorting: `O(n log n)`  
-- Computing total wait time: `O(n)`
+- Sorting: \( O(n \log n) \)  
+- Summation: \( O(n) \)
 
 ---
 
 ### 2. 💰 Coin Change
 
 **Problem:**  
-Given coin denominations (e.g., `{1, 2, 5, 10}`) and an amount `n = 38`, compute the minimum number of coins.
+Given denominations \( d_1, d_2, \dots, d_k \) (e.g., {1, 2, 5, 10}) and a target amount \( M \), compute the minimal number of coins to make \( M \).
 
 **Greedy Algorithm:**  
-Use as many coins as possible of the highest denomination ≤ remaining amount.
+While \( M > 0 \):  
+- Pick the largest coin \( d_i \leq M \)  
+- Subtract from \( M \), repeat
 
-**Execution for 38:**  
-- Take 3 × 10 → 30  
-- Take 1 × 5 → 35  
-- Take 1 × 2 → 37  
-- Take 1 × 1 → 38  
-→ Total: 6 coins
+**Example (Canonical System):**  
+For `M = 38` and `{1, 2, 5, 10}`:
+- 3 × 10 → 30  
+- 1 × 5 → 35  
+- 1 × 2 → 37  
+- 1 × 1 → 38  
+Total: 6 coins
 
-**When Greedy Fails:**  
-For coins `{1, 3, 4}`, target `6`:  
-- Greedy → 4 + 1 + 1 = 3 coins  
-- Optimal → 3 + 3 = 2 coins
+**Counterexample (Non-Canonical System):**  
+Coins: {1, 3, 4}, Target: 6  
+- Greedy: 4 + 1 + 1 = 3 coins  
+- Optimal: 3 + 3 = 2 coins
 
 **Conclusion:**  
-Greedy is optimal **only** if the coin system is *canonical* (like real-world currencies).
+Greedy only works when the coin system is canonical.
 
 ---
 
 ## 🔹 Intermediate Level
 
-### 3. 🧮 Polynomial Coefficients Ordering
+### 3. 🧮 Polynomial Coefficient Maximization
 
 **Problem:**  
-Maximize:
+Given an array `A[0..n-1]` and a number \( X > 1 \), reorder `A` to maximize:
 \[
-P(A, X) = A_0 + A_1 X + A_2 X^2 + \dots + A_{n-1} X^{n-1}
+P = A_0 + A_1 X + A_2 X^2 + \dots + A_{n-1} X^{n-1}
 \]
-by reordering array `A`.
 
 **Greedy Algorithm:**  
-Sort `A` in increasing order. Assign smallest value to `A_0`, next to `A_1`, etc.
+Sort `A` in ascending order. Assign smallest values to smallest powers.
 
 **Why it works:**  
-Since `X > 1`, higher exponents amplify values more. Assign large values to large powers.
+Each term is weighted by \( X^i \), which increases with `i`. So we want to place larger values of `A[i]` on larger powers of `X`.
 
 **Proof (Exchange Argument):**  
-Swapping a smaller `a` with a larger `b` in higher powers increases total sum:
+Suppose we assign \( a > b \) to exponents \( i < j \), respectively.  
+Swapping gives:
 \[
-(b - a)(X^j - X^i) > 0 \quad 	ext{if } j > i, b > a
+\Delta = bX^i + aX^j - (aX^i + bX^j) = (b-a)(X^i - X^j)
 \]
+Since \( b < a \) and \( X^i < X^j \), we have \( \Delta > 0 \), so the swap improves the result.
 
 **Time Complexity:**  
-- Sorting: `O(n log n)`  
-- Evaluation: `O(n)`
+- Sorting: \( O(n \log n) \)
 
 ---
 
-### 4. 🛍️ Product Pairing for Discount
+### 4. 🛍️ Product Pairing Problem
 
 **Problem:**  
-Given `N` product prices, pair them into `N/2` pairs to minimize the **total sum** of all pairwise totals.
+Given a list of `n` prices, pair them into `n/2` pairs so that the **sum of all pair totals** is minimized.
 
 **Greedy Algorithm:**  
-Sort the prices. Pair smallest with largest, second smallest with second largest, etc.
+Sort the list. Pair the smallest with the largest, second smallest with second largest, etc.
 
 **Why it works:**  
-This “balanced” pairing minimizes extremes and reduces total cost.
+Pairing extremes “balances” large and small values, reducing overall contribution to the total.
 
-**Proof Idea:**  
-This minimizes the sum of product sums through symmetric pairing. Similar to minimizing variance.
+**Mathematical Justification:**  
+If we denote the sorted list as \( p_1 \leq p_2 \leq \dots \leq p_n \),  
+then optimal pairing is:  
+\[
+(p_1, p_n),\ (p_2, p_{n-1}),\ \dots
+\]
 
 **Time Complexity:**  
-- Sorting: `O(n log n)`
+- Sorting: \( O(n \log n) \)
 
 ---
 
@@ -105,64 +116,60 @@ This minimizes the sum of product sums through symmetric pairing. Similar to min
 ### 5. 🚓 Police and Thieves
 
 **Problem:**  
-Array with `'P'` and `'T'`. Each police can catch one thief within `K` distance.
+You are given an array of `P` (police) and `T` (thieves). A police can catch a thief if they are within distance `K`.
 
 **Greedy Algorithm:**  
-Use two queues or pointers:
-- When a `'P'` and `'T'` are within distance `K`, match them.
-- Advance both pointers.
+Use two pointers:
+- One pointer for police, one for thieves
+- Match when they are within range
+- Advance both pointers accordingly
 
-**Why it works:**  
-You always catch the earliest available thief, ensuring no opportunity is missed.
+**Correctness:**  
+We always make the earliest possible valid match. Matching any later would risk losing a thief.
 
 **Time Complexity:**  
-- One pass: `O(n)`
+- One pass over array: \( O(n) \)
 
 ---
 
 ### 6. 🎒 Fractional Knapsack
 
 **Problem:**  
-You can take fractions of `n` items with value `v[i]` and weight `w[i]`, and total capacity `C`. Maximize total value.
+Given items with value \( v_i \) and weight \( w_i \), and capacity \( C \), maximize total value using fractional items.
 
 **Greedy Algorithm:**  
-- Compute value/weight ratio `v[i]/w[i]`.  
-- Sort items by descending ratio.  
-- Take full items until capacity runs out, then take a fraction.
-
-**Why it works:**  
-You always take the most value-efficient item first.
+1. Compute value density: \( \rho_i = \frac{v_i}{w_i} \)  
+2. Sort items by \( \rho_i \) in decreasing order  
+3. Take as much of each item as fits
 
 **Proof of Optimality:**  
-The greedy choice guarantees the best possible value at every step.
+Greedy works because:
+- Taking highest \( \rho \) first guarantees locally optimal gain
+- There is no dependence between item choices (due to fractional selection)
 
 **Time Complexity:**  
-- Sorting: `O(n log n)`  
-- Greedy fill: `O(n)`
+- Sorting: \( O(n \log n) \)
 
 ---
 
 ### 7. 📡 Huffman Coding
 
 **Problem:**  
-Given character frequencies, generate a prefix-free binary code minimizing the total encoded length.
+Given characters with frequencies, produce prefix-free codes that minimize average code length.
 
-**Greedy Algorithm:**  
-- Use a min-heap (priority queue).  
-- At each step, merge the two smallest frequencies into one node.  
-- Repeat until a single tree is formed.
+**Greedy Algorithm (Huffman):**
+1. Use a min-heap to combine two smallest nodes  
+2. Create a new node with combined frequency  
+3. Repeat until a single tree remains
 
 **Why it works:**  
-The most frequent symbols get shorter codes. The two least frequent are placed deepest.
+Always combining the two least frequent items reduces the depth for common characters.
 
-**Proof Sketch:**  
-Induction and exchange argument show that combining the two smallest always leads to an optimal tree.
+**Proof (Sketch):**  
+Induction and exchange argument:
+- Any optimal tree can be transformed into Huffman tree with no increase in cost
 
 **Time Complexity:**  
-- Heap operations: `O(n log n)`
-
-**Example:**  
-Frequencies: a:5, b:9, c:12, d:13, e:16, f:45  
-→ Optimal total bits = 224
+- \( O(n \log n) \) using a priority queue
 
 ---
