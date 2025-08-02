@@ -17,9 +17,10 @@ Sort the array `Time[]` in non-decreasing order. Refuel cars in that order.
 **Why it works:**  
 Let `T[i]` be the time of the `i`-th car in the sorted list.  
 The total waiting time is:  
-$$
-	ext{Total} = \sum_{i=0}^{n-1} \sum_{j=0}^{i} T[j] = T[0](n) + T[1](n-1) + \dots + T[n-1](1)
-$$
+
+\[
+\text{Total} = \sum_{i=0}^{n-1} \sum_{j=0}^{i} T[j] = T[0](n) + T[1](n-1) + \dots + T[n-1](1)
+\]
 
 **Proof (Exchange Argument):**  
 If two cars `i` and `j` are in the wrong order (`T[i] > T[j]` but `i < j`), swapping them reduces the total wait. Applying such swaps leads to the sorted list — the optimal order.
@@ -56,9 +57,11 @@ Greedy works for **canonical systems** but fails otherwise.
 
 **Problem:**  
 Reorder array \( A = [a_0, \dots, a_{n-1}] \) to maximize:
-$$
+
+\[
 P(X) = A_0 + A_1 X + A_2 X^2 + \dots + A_{n-1} X^{n-1}
-$$
+\]
+
 for a given \( X > 1 \).
 
 **Greedy Algorithm:**  
@@ -66,9 +69,11 @@ Sort \( A \) in increasing order and assign values in that order to increasing p
 
 **Proof (Exchange Argument):**  
 Suppose we have two values \( a > b \) and powers \( i < j \). Then:
-$$
+
+\[
 \Delta = bX^i + aX^j - (aX^i + bX^j) = (b - a)(X^i - X^j)
-$$
+\]
+
 Since \( b < a \) and \( X^i < X^j \), we have \( \Delta > 0 \) — swapping improves the result.
 
 ---
@@ -77,12 +82,14 @@ Since \( b < a \) and \( X^i < X^j \), we have \( \Delta > 0 \) — swapping imp
 
 **Problem:**  
 Given prices \( p_1, \dots, p_n \), pair them into \( n/2 \) pairs minimizing:
-$$
-	ext{Total} = \sum_{i=1}^{n/2} (a_i + b_i)
-$$
+
+\[
+\text{Total} = \sum_{i=1}^{n/2} (a_i + b_i)
+\]
 
 **Greedy Algorithm:**  
 Sort prices and pair smallest with largest:
+
 \[
 (p_1, p_n), (p_2, p_{n-1}), \dots
 \]
@@ -111,9 +118,10 @@ Use two pointers or queues to match nearest valid pairs within distance \( K \).
 
 **Problem:**  
 Given values \( v_i \), weights \( w_i \), and capacity \( C \), maximize:
-$$
-	ext{Value} = \sum_{i} x_i v_i \quad 	ext{such that } \sum x_i w_i \leq C,\quad 0 \leq x_i \leq 1
-$$
+
+\[
+\text{Value} = \sum_{i} x_i v_i \quad \text{such that } \sum x_i w_i \leq C,\quad 0 \leq x_i \leq 1
+\]
 
 **Greedy Algorithm:**  
 1. Compute \( v_i / w_i \)  
@@ -129,9 +137,11 @@ $$
 
 **Problem:**  
 Given frequencies, construct prefix-free binary code minimizing:
-$$
+
+\[
 \sum_{i=1}^n f_i \cdot d_i
-$$
+\]
+
 where \( d_i \) is the depth (code length) of character \( i \).
 
 **Greedy Algorithm:**  
