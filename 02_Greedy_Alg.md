@@ -1,4 +1,4 @@
-# ✅ Greedy Algorithms Solutions 
+# ✅ Greedy Algorithms with Solutions 
 
 ## 🔹 Basic Level
 
