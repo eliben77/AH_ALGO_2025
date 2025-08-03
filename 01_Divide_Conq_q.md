@@ -1,7 +1,7 @@
 
 # Divide and Conquer – Practice Exercises
 
-This problem set covers a range of classic and advanced problems based on the divide and conquer paradigm.
+Problems based on the divide and conquer paradigm.
 
 ---
 
