@@ -1,4 +1,5 @@
-# Greedy Algorithms — 12 Problems (Expanded Problem Statements + Pseudocode + Examples)
+# Greedy Algorithms — 12 Problems
+( Problem Statements + Pseudocode + Examples)
 
  
 ## 1) Minimum Rooms / Platforms (Maximum Overlap)
