@@ -1,465 +1,427 @@
-# Greedy Algorithms – 20 Exercises With Full Solutions
+# Greedy Algorithms — 12 Problems (Expanded Problem Statements + Pseudocode + Examples)
 
  
-## Table of Contents
+## 1) Minimum Rooms / Platforms (Maximum Overlap)
 
-1. Activity Selection (Maximum Non‑Overlapping Intervals)
-2. Minimum Rooms / Platforms (Sweep Line)
-3. Coin Change — Canonical Systems (+ counterexample)
-4. Connecting Ropes / Optimal Merge Pattern
-5. Fractional Knapsack
-6. Pairing to Minimize Sum of Pair Maxima
-7. Minimize Maximum Lateness (EDD rule)
-8. Minimize Weighted Sum of Completion Times (Smith’s rule)
-9. Unit‑Length Intervals — what Greedy can and can’t do
-10. Job Sequencing with Deadlines (Unit‑time jobs)
-11. Gas Station / Circular Tour
-12. Earliest‑Finish Exchange Argument (and a two‑room note)
-13. Minimum Rooms via Priority Queue
-14. Huffman Coding
-15. Minimum Spanning Tree (Kruskal / Prim)
-16. Egyptian Fractions (Greedy)
-17. Antenna Placement (Maximize Min Distance via Greedy Feasibility)
-18. Scheduling With Linear Tardiness Penalties — limits of Greedy
-19. Interval Cover With Capacities — a Greedy that works
-20. When Greedy Fails (0/1‑Knapsack; Two‑machine makespan)
+**Problem.**
 
----
+* **Input.** `n` half‑open intervals `[sᵢ, fᵢ)` with `sᵢ < fᵢ`, representing usage of a resource (meeting room, train platform). Times can be integers or reals.
+* **Overlap model.** Two intervals overlap iff their intersection has positive length. Thus `[a,b)` and `[b,c)` do **not** overlap (touching endpoints allowed). If your domain treats touching as overlap, say so (we note the change below).
+* **Goal (output).** The **minimum number of identical rooms/platforms** needed so that every interval is assigned to a room and no two overlapping intervals share the same room. (You only need the number here; #8 gives the actual assignment.)
+* **Real‑world analogy.** The peak number of simultaneous meetings determines how many rooms you must rent.
 
-## 1) Activity Selection (Maximum Non‑Overlapping Intervals)
-
-**Problem.** Intervals (s\_i, f\_i). Select the largest set of pairwise non‑overlapping intervals.
-
-**Greedy algorithm.** Sort by non‑decreasing finish time. Repeatedly pick the first interval that starts after the last chosen finishes.
-
-**Proof (exchange).** Let OPT be an optimal solution. Compare the first finishing interval `A` in the greedy solution to OPT’s first interval `B`. Since `finish(A) <= finish(B)`, replacing `B` by `A` keeps feasibility and size. Repeat to transform OPT into the greedy solution without decreasing size → greedy is optimal.
-
-**Pseudocode.**
-
-```text
-sort intervals by finish
-S = []
-last_end = -inf
-for (s,f) in intervals:
-  if s >= last_end:
-    S.append((s,f))
-    last_end = f
-return S
-```
-
-**Complexity.** Sorting dominates: O(n log n). The scan is O(n).
-
----
-
-## 2) Minimum Rooms / Platforms (Sweep Line)
-
-**Problem.** Given intervals (start,end), compute the minimum number of rooms (maximum overlap at any time).
-
-**Greedy / sweep.** Create two arrays: all starts and all ends. Sort both. Scan with two pointers: when a start comes before an end, need a room (`++cur`); when an end comes first, free a room (`--cur`). Track `max(cur)`.
-
-**Correctness.** The scan simulates the timeline; `cur` equals the number of active intervals; its maximum is exactly the minimum number of rooms by pigeonhole principle.
+**Greedy solution (sweep line).** Sort all **start times** and all **end times** separately; scan with two pointers. On a start < next end → need an extra room; on an end ≤ next start → a room frees up. Track the maximum concurrent usage.
 
 **Pseudocode.**
 
 ```text
 starts = sorted(s_i)
 ends   = sorted(f_i)
-i=j=0; cur=max_rooms=0
-while i < n:
-  if starts[i] < ends[j]:
-    cur += 1; max_rooms = max(max_rooms, cur); i += 1
-  else:
-    cur -= 1; j += 1
+i = j = 0
+cur = max_rooms = 0
+while i < n:                   # process all starts
+  if starts[i] < ends[j]:      # touching is non-overlap
+    cur += 1
+    max_rooms = max(max_rooms, cur)
+    i += 1
+  else:                        # ends[j] <= starts[i]
+    cur -= 1
+    j += 1
 return max_rooms
 ```
 
-**Complexity.** Sorting O(n log n); scan O(n).
+**Correctness.** At any time `t`, the number of active intervals is a lower bound on rooms (pigeonhole). The scan **immediately** reuses a room when an interval ends (we process `end` when it’s ≤ next `start`), so it attains that lower bound. Hence the maximum concurrent count is **necessary and sufficient**.
+
+**Example:** Intervals: `[0,30), [5,10), [15,20), [25,40), [35,50)` → starts `[0,5,15,25,35]`, ends `[10,20,30,40,50]`. Peak concurrency is 2 ⇒ **2 rooms**.
+
+**Complexity.** Sort `O(n log n)`; scan `O(n)`.
+
+**Clarifications & variants.** If touching should count as overlap, change the condition to `starts[i] <= ends[j]`.
 
 ---
 
-## 3) Coin Change — Canonical Systems (+ counterexample)
+## 2) Connecting Ropes / Optimal Merge Pattern
 
-**Problem.** Given coin denominations and amount V, minimize number of coins.
+**Problem.**
 
-**Greedy (canonical system example).** For {1,2,5,10}, the greedy that repeatedly takes the largest coin <= remaining is optimal.
+* **Input.** A multiset of positive lengths `L₁..Lₙ`.
+* **Action/cost.** Merging two ropes of lengths `x,y` costs `x+y` and yields a rope of length `x+y` that re‑enters the pool.
+* **Goal (output).** The **minimum total merge cost** to end with a single rope.
+* **Analogy.** Merging sorted files where merge cost is proportional to sizes; minimize total disk I/O.
 
-**Why it’s correct for {1,2,5,10}.** In any solution, replacing five 2’s by one 10, two 5’s by one 10, or two 2’s by one 4 (not present) type arguments do not increase coin count; structured exchanges yield that any optimal solution can be transformed into greedy’s choice countwise. (More generally, standard proof uses exchanges by decimal structure.)
-
-**Counterexample system.** Denoms {1,3,4}, V=6. Greedy takes 4+1+1 (3 coins), but optimal is 3+3 (2 coins). So greedy is not universally correct.
-
-**Pseudocode (greedy).**
-
-```text
-sort denoms descending
-count=0; rem=V
-for c in denoms:
-  k = rem // c
-  count += k
-  rem -= k*c
-return count   # optimal only in canonical systems
-```
-
-**Complexity.** O(m log m) for sorting m denominations; O(m) for the pass.
-
----
-
-## 4) Connecting Ropes / Optimal Merge Pattern
-
-**Problem.** Given rope lengths L\_i, merging two ropes of lengths x,y costs x+y; the merged rope re‑enters the pool. Minimize total cost to end with one rope.
-
-**Greedy.** Always merge the two shortest ropes first. Implement with a min‑heap.
-
-**Proof.** (Optimal merge/Huffman lemma.) Take an optimal solution; among its first merge, pick two ropes a<=b that are minimal; if not, swapping their first merge with any larger rope(s) does not increase later costs because a and b appear in all subsequent sums anyway. Repeating transforms OPT into the greedy sequence.
+**Greedy solution.** Always merge the **two shortest** items first. Use a min‑heap to fetch them fast.
 
 **Pseudocode.**
 
 ```text
-heap = MinHeap(L)
+heap = MinHeap(L_1..L_n)
 cost = 0
 while heap.size() > 1:
   x = heap.pop_min()
   y = heap.pop_min()
-  cost += x+y
-  heap.push(x+y)
+  cost += x + y
+  heap.push(x + y)
 return cost
 ```
 
-**Complexity.** Each of n-1 merges does 2 pops + 1 push: O(n log n).
+**Correctness.** (Optimal‑merge/Huffman lemma.) If a shortest rope waits, it is added into **more** later merges and its length is counted more times. Exchanging merges to pair the two shortest **never** increases cost; iterating until every step takes the two smallest gives an optimal sequence.
+
+**Example:** `[8,4,6,12]`: merge `4+6=10` (cost 10) → `[8,10,12]`; merge `8+10=18` (cost 28) → `[12,18]`; merge `12+18=30` (cost **58**). Any other first merge is ≥ 58.
+
+**Complexity.** `O(n log n)`.
+
+**Notes.** This is the same structure as **Huffman coding** (merge least‑frequent symbols first).
 
 ---
 
-## 5) Fractional Knapsack
+## 3) Pairing to Minimize Sum of Pair Maxima
 
-**Problem.** Items i with value v\_i and weight w\_i, capacity W. Fractions allowed. Maximize value.
+**Problem.**
 
-**Greedy.** Sort by density v\_i / w\_i descending; take as much as possible of each until capacity fills.
+* **Input.** `2n` numbers. You must partition them into `n` pairs.
+* **Cost.** A pair `(a,b)` costs `max(a,b)`.
+* **Goal (output).** A pairing of **minimum total cost** `Σ max over pairs`.
+* **Why this model appears.** “Buy one, pay for the pricier” promotions; pairing students for tests where cost is defined by the stronger student’s score, etc.
 
-**Proof (exchange/convexity).** If two items i,j have densities d\_i >= d\_j but we take a positive fraction of j before saturating i, swapping a small epsilon weight from j to i increases value by (d\_i - d\_j) \* epsilon >= 0. Hence any optimal solution is sorted by density; the unique fractional item is the first that overflows.
+**Greedy solution.** Sort ascending and pair **neighbors**: `(q₁,q₂), (q₃,q₄), …`. Then cost is `Σ q₂k`.
 
 **Pseudocode.**
 
 ```text
-sort items by density = v/w descending
-val=0; cap=W
-for item in items:
-  take = min(cap, item.w)
-  val += take * (item.v/item.w)
-  cap -= take
-  if cap == 0: break
-return val
+q = sorted(A)
+cost = 0
+pairs = []
+for k in range(0, len(q), 2):
+  pairs.append((q[k], q[k+1]))
+  cost += q[k+1]
+return pairs, cost
 ```
 
-**Complexity.** O(n log n) for sorting; O(n) scan.
+**Correctness.** Since `Σ max = (sum of all numbers) − Σ min`, minimizing `Σ max` ≡ maximizing the sum of the pairwise **minima**. For `a≤b≤c≤d`, crossing pairs `(a,d),(b,c)` have min‑sum `a+b`; neighbor pairs `(a,b),(c,d)` have min‑sum `a+c ≥ a+b`. Replacing crossings with neighbors never reduces min‑sum. Eliminating all crossings yields the neighbor pairing, hence optimal.
+
+**Example:** `A=[1,2,2,7,8,10]` → neighbor pairs `(1,2),(2,7),(8,10)` cost `2+7+10=19`. A crossing pairing costs ≥ 25.
+
+**Complexity.** Sort `O(n log n)`; pair in `O(n)`.
+
+**Edge cases.** Duplicates are fine; proof is unaffected.
 
 ---
 
-## 6) Pairing to Minimize Sum of Pair Maxima
+## 4) Minimize Total Wait Time (Minimize `Σ Cᵢ`)
 
-**Problem.** Given 2n numbers, pair them to minimize sum over pairs of their maxima.
+**Problem.**
 
-**Greedy.** Sort ascending and pair neighbors: (q1,q2),(q3,q4),...; pay `sum q_{2k}`.
+* **Input.** Single machine. All jobs available at time 0; each job `i` has processing time `pᵢ>0` (no preemption).
+* **Timing.** If jobs are run in order `π`, completion times are `Cᵢ = Σ_{j up to i in π} p_j`.
+* **Objective.** Minimize `Σ Cᵢ` (equivalently average response/wait). Note: average **waiting** time `Σ(Cᵢ − pᵢ)` differs from `Σ Cᵢ` by the constant `Σ pᵢ`, so minimizing one minimizes the other.
+* **Analogy.** Minimize average time customers spend in a non‑preemptive service queue.
 
-**Proof.** Since sum of all numbers S is fixed and sum max = S - sum min, minimizing sum max is maximizing sum of pairwise minima. By the rearrangement inequality / exchange on quadruples (a<=b<=c<=d), `(a,b)+(c,d)` has min sum `a+c` >= `a+b`? More directly: for any crossing pairing `(a,d),(b,c)`, replacing by `(a,b),(c,d)` does not decrease the sum of minima; applying repeatedly yields the neighbor pairing, which thus maximizes sum of minima and minimizes sum of maxima.
-
-**Complexity.** O(n log n) for sorting; O(n) pairing.
-
----
-
-## 7) Minimize Maximum Lateness (EDD rule)
-
-**Problem.** Jobs with processing times p\_i and deadlines d\_i on one machine. Lateness of job i is L\_i = C\_i - d\_i. Minimize L\_max = max L\_i.
-
-**Greedy.** Order jobs by non‑decreasing deadlines (EDD: earliest due date).
-
-**Proof (inversion/exchange).** If two adjacent jobs A,B with d\_A > d\_B are in that order, swapping them cannot increase any completion time beyond the larger of the two deadlines; the maximum lateness does not increase. Repeatedly removing all inversions yields EDD without worsening L\_max; thus EDD is optimal.
+**Greedy solution (SPT).** Run jobs in **Shortest Processing Time first** order.
 
 **Pseudocode.**
 
 ```text
-sort jobs by deadline ascending
-C=0; Lmax= -inf
-for j in jobs:
-  C += j.p
-  Lmax = max(Lmax, C - j.d)
-return order, Lmax
-```
-
-**Complexity.** O(n log n).
-
----
-
-## 8) Minimize Weighted Sum of Completion Times (Smith’s rule)
-
-**Problem.** Jobs with processing p\_i and weight w\_i. Minimize sum w\_i \* C\_i on one machine.
-
-**Greedy (Smith’s rule).** Order by non‑increasing key w\_i / p\_i (equivalently, sort by p\_i / w\_i ascending).
-
-**Proof (pairwise interchange).** For two jobs i,j, compare orders \[i,j] vs \[j,i]. The contribution difference is `w_i*(p_i+p_j) + w_j*p_j  -  (w_j*(p_i+p_j) + w_i*p_i) = p_i*w_j - p_j*w_i`. Prefer i before j iff `w_i/p_i >= w_j/p_j`. Applying the pairwise criterion transitive‐closure gives the Smith order, which is optimal.
-
-**Pseudocode.**
-
-```text
-sort jobs by key = w/p descending
-C=0; total=0
-for j in jobs:
-  C += j.p
-  total += j.w * C
-return order, total
-```
-
-**Complexity.** O(n log n).
-
----
-
-## 9) Unit‑Length Intervals — what Greedy can and can’t do
-
-**Problem.** Intervals all have length 1.
-
-**A. Unweighted case (maximize count).** Greedy by earliest finish is optimal (this is the classic activity selection).
-
-**B. Weighted case (maximize total weight).** *In continuous time*, no simple greedy is optimal. Counterexample: intervals [0,1](w=1), [0.5,1.5](100), [1.5,2.5](100). Earliest‑finish picks \[0,1], loses the 100+100 option.
-
-**Special discrete case where a greedy works.** If all starts are integers and intervals are \[t, t+1] exactly, conflicts occur only among intervals with the same t. Then the optimal is: for each integer t, take the max‑weight interval starting at t. (No cross‑slot overlap.)
-
-**Complexity.** Sorting O(n log n) or O(n) bucket by integer t.
-
----
-
-## 10) Job Sequencing with Deadlines (Unit‑time jobs)
-
-**Problem.** Jobs j take 1 unit, have profit w\_j and deadline d\_j (integer). At most one job per time slot; job must finish by its deadline. Maximize total profit.
-
-**Greedy.** Sort jobs by profit descending. For each job, schedule it in the latest available slot at or before its deadline. Use DSU (union‑find) or a balanced structure to find the latest free slot.
-
-**Proof (exchange).** If a more profitable job is left unscheduled while a less profitable one occupies a slot, swapping increases profit without violating deadlines. Placing each chosen job as late as possible leaves earlier slots available for others. Standard exchange shows optimality.
-
-**Pseudocode (DSU).**
-
-```text
-make_set(0..T)   # T = max deadline; parent[t] = greatest free slot <= t
-sort jobs by w desc
-schedule = []
+jobs = sorted(jobs, key = p_i)
+C = 0
+sumC = 0
 for job in jobs:
-  t = find(d_j)      # latest free slot <= deadline
+  C += job.p
+  sumC += C
+return jobs, sumC
+```
+
+**Correctness.** For adjacent jobs `i,j` with `pᵢ ≤ pⱼ`, order `[i,j]` contributes `pᵢ + (pᵢ+pⱼ)`; order `[j,i]` contributes `pⱼ + (pⱼ+pᵢ)`, larger by `(pⱼ − pᵢ) > 0`. Swapping any inversion (longer before shorter) strictly reduces `ΣC`. Removing all inversions yields SPT, the global optimum.
+
+**Example:** `p = [3,1,2]`: SPT order `[1,2,3]` → `C = [1,3,6]`, `ΣC=10`. Order `[3,1,2]` → `C=[3,4,6]`, `ΣC=13` (worse).
+
+**Complexity.** `O(n log n)`.
+
+**Edge notes.** With **release times** or **preemption**, optimal rule is **SRPT** (shortest remaining processing time), not plain SPT.
+
+---
+
+## 5) Smith’s Rule (Minimize `Σ wᵢ Cᵢ`)
+
+**Problem.**
+
+* **Input.** Single machine. Job `i` has processing `pᵢ` and weight `wᵢ` (importance/penalty per unit completion time).
+* **Objective.** Minimize the **weighted** sum of completion times `Σ wᵢ Cᵢ`.
+* **Analogy.** Weighted customers where delays of high‑priority customers are more costly.
+
+**Greedy solution.** Sort by **`wᵢ/pᵢ` descending** (equivalently `pᵢ/wᵢ` ascending), then run jobs.
+
+**Pseudocode.**
+
+```text
+jobs = sorted(jobs, key = (w_i / p_i), reverse=True)
+C = 0
+obj = 0
+for job in jobs:
+  C += job.p
+  obj += job.w * C
+return jobs, obj
+```
+
+**Correctness.** Two‑job exchange: compare `[i,j]` vs `[j,i]`. Objective difference `Δ = pᵢ wⱼ − pⱼ wᵢ`. Prefer `i` before `j` iff `Δ ≤ 0 ⇔ wᵢ/pᵢ ≥ wⱼ/pⱼ`. Sorting by this key makes every adjacent pair optimal; transitivity yields a global optimum (Smith 1956).
+
+**Example:** `(p,w) = (3,6), (2,3), (1,5)` → ratios `(2, 1.5, 5)` → order `(1,5),(3,6),(2,3)` → `C=[1,4,6]`, `ΣwC=47`, minimal among permutations.
+
+**Complexity.** `O(n log n)`.
+
+**Caution.** This does **not** minimize tardiness (#11).
+
+---
+
+## 6) Unit‑Length Intervals — What Greedy Can and Can’t Do
+
+**Problem.** Intervals are all of length 1.
+
+* **Unweighted variant.** Maximize the **number** of non‑overlapping intervals.
+* **Weighted variant.** Each interval `j` has value `vⱼ`; maximize total value without overlap.
+* **Continuous vs discrete.** In continuous time, starts can be arbitrary reals; in the **discrete** special case, starts are integers and each interval is **exactly** `[t, t+1]`.
+
+**Greedy solution.**
+
+* **Unweighted:** earliest‑finish (finish ↑) is optimal (classic activity selection argument).
+* **Weighted, continuous time:** no simple global greedy is optimal (small counterexamples exist).
+* **Discrete special case:** conflicts occur **only** among intervals with the same `t`. So pick, for each `t`, the interval with **maximum value**; choices at different `t` are independent.
+
+**Pseudocode (unweighted; discrete weighted).**
+
+```text
+# Unweighted
+I = sorted(intervals, key=finish)
+S=[]; last=-inf
+for (s,f) in I:
+  if s >= last: S.append((s,f)); last=f
+return S
+
+# Discrete weighted (all intervals [t,t+1])
+for each integer t:
+  choose interval with start t and maximum value (if exists)
+return union over t
+```
+
+**Correctness.** Unweighted: exchange—there exists an optimal solution whose first interval has **minimum finish**; iterate. Discrete weighted: because intervals at different `t` do not overlap across `t`, you can maximize locally at each `t` to get a global optimum. The general weighted case needs DP (e.g., weighted interval scheduling).
+
+**Examples:**
+
+* Unweighted: `[0,1], [0.5,1.5], [1.5,2.5]` → greedy picks `[0,1]` and `[1.5,2.5]` (2 intervals).
+* Weighted counterexample (continuous): `[0,1](1), [0.5,1.5](100), [1.5,2.5](100)` → picking `[0,1]` blocks the two 100‑valued intervals.
+
+**Complexity.** `O(n log n)` (or `O(n)` with bucketing by integer `t`).
+
+---
+
+## 7) Job Sequencing with Deadlines (Unit‑Time Jobs)
+
+**Problem.**
+
+* **Input.** `n` jobs; each job `j` takes **one** unit, has profit `wⱼ ≥ 0` and a **deadline** `dⱼ ∈ {1..T}`. All jobs available at time 0; preemption not allowed.
+* **Feasibility.** At most one job per unit time slot. A job completed at or before its deadline earns its profit; jobs scheduled after their deadline earn **0**.
+* **Goal (output).** A schedule (subset and times) with **maximum total profit**.
+
+**Greedy solution.** Sort jobs by **profit descending**. For each job, schedule it in the **latest available** slot at or before its deadline (use DSU to find the latest free slot quickly).
+
+**Pseudocode.**
+
+```text
+# DSU helpers
+make_set(0..T): parent[t]=t for all t; parent[0]=0
+find(t): if parent[t]==t return t else parent[t]=find(parent[t]); return parent[t]
+union(a,b): parent[find(a)] = find(b)
+
+jobs = sorted(jobs, key=profit, reverse=True)
+schedule = [EMPTY] * (T+1)
+for job in jobs:
+  t = find(job.deadline)
   if t > 0:
     schedule[t] = job
-    union(t, t-1)    # mark t filled; next free is find(t-1)
+    union(t, t-1)
 return schedule
 ```
 
-**Complexity.** Sorting O(n log n); DSU with path compression gives near‑O(1) per job → O(n log n + T α(T)).
+**Correctness.** (i) If a less profitable job occupies a slot that a more profitable job could use, swapping them increases profit and keeps feasibility. (ii) Placing a chosen job as **late as possible** preserves opportunities for others (it doesn’t block any job with an earlier deadline). Repeating these exchanges yields the greedy schedule.
+
+**Example:** `(profit,deadline) = (100,2),(50,1),(20,2),(10,1)` → choose `100@t=2`, `50@t=1`, others drop; total **150**.
+
+**Complexity.** `O(n log n)` + near‑`O(1)` DSU operations.
 
 ---
 
-## 11) Gas Station / Circular Tour
+## 8) Minimum Rooms via Priority Queue (Constructive)
 
-**Problem.** Stations 0..n-1 around a circle; at i you gain gas\[i] and need cost\[i] to go to i+1. Find a start index to complete the loop (or none).
+**Problem.** Same input as #1, but **also output an assignment** of intervals to the **minimum** number of rooms.
 
-**Greedy.** Linear scan with two invariants:
-
-1. If the running tank ever drops below 0 at station j, no station in the segment since the last reset can be a valid start. Reset start to j+1, tank=0.
-2. If total gas >= total cost, some start exists; otherwise none.
+**Greedy solution.** Sort intervals by **start**. Maintain a **min‑heap of `(end_time, room_id)`**. For each new interval `(s,f)`, if the earliest‑ending room has `end ≤ s`, reuse it; otherwise open a new room.
 
 **Pseudocode.**
 
 ```text
-start=0; tank=0; total=0
-for i in 0..n-1:
-  diff = gas[i] - cost[i]
-  tank += diff; total += diff
-  if tank < 0:
-    start = i+1
-    tank = 0
-if total < 0: return "no solution"
-return start
+I = sorted(intervals, key=start)
+heap = MinHeap()  # (end, room)
+rooms = 0
+assignment = []   # (interval_id -> room)
+for I_k in I:
+  if heap and heap.min().end <= I_k.start:
+    (e, r) = heap.pop_min()
+    assignment.append((I_k.id, r))
+    heap.push((I_k.finish, r))
+  else:
+    rooms += 1
+    r = rooms
+    assignment.append((I_k.id, r))
+    heap.push((I_k.finish, r))
+return rooms, assignment
 ```
 
-**Complexity.** O(n). Proof follows from invariant (1) and total balance.
+**Correctness.** A room becomes reusable **exactly** when its current meeting ends. The min‑heap gives the earliest such room; reusing whenever possible attains the lower bound from #1. Opening a new room happens **only** when all rooms are still busy.
+
+**Example:** `[0,30]→R1`, `[5,10]→R2` (R1 busy), `[15,20]→R2` (R2 free at 10). Total **2 rooms**.
+
+**Complexity.** `O(n log n)`.
 
 ---
 
-## 12) Earliest‑Finish Exchange Argument (and a two‑room note)
+## 9) Egyptian Fractions (Greedy)
 
-**Problem.** Show how the earliest‑finish rule emerges from a local exchange.
+**Problem.**
 
-**Claim.** Among all feasible schedules of non‑overlapping intervals, there exists an optimal one whose first interval has the earliest finish time. (This is the key greedy‑choice property used in #1.)
+* **Input.** A reduced fraction `0 < a/b < 1`.
+* **Output.** A list of **distinct** denominators `(x₁, x₂, …)` such that `a/b = Σ 1/xₖ`.
+* **Why distinct?** Classical Egyptian representation requires distinct unit fractions.
 
-**Proof.** Let OPT’s first interval be J. Let G be the earliest‑finishing interval among all. Replace J by G; feasibility is preserved because finish(G) <= finish(J). The remaining part of OPT can only be helped by finishing earlier. Repeat to obtain the greedy solution.
-
-**Two‑room remark.** If you have exactly two parallel rooms and wish to maximize the number of talks scheduled, a simple “run earliest‑finish twice” heuristic is *not* always optimal; the problem reduces to maximum independent set on interval graphs with capacity 2, solvable in O(n log n) by DP. Greedy still plays a role inside the DP via earliest‑finish indexing.
-
----
-
-## 13) Minimum Rooms via Priority Queue
-
-**Problem.** Same as #2 but with an explicit assignment.
-
-**Greedy / heap.** Sort intervals by start time. Maintain a min‑heap of current room end times. When a meeting starts, if the earliest‑ending room ends <= its start, reuse it (pop+push new end); otherwise open a new room (push). The heap size after processing all intervals equals the minimum number of rooms; the pops give an actual assignment if you track room IDs.
+**Greedy solution.** At each step take `x = ceil(b/a)` and subtract `1/x` from the fraction; reduce and repeat until numerator zero.
 
 **Pseudocode.**
 
 ```text
-sort by start
-heap = MinHeap()  # stores end times
-for (s,f) in intervals:
-  if heap and heap.min() <= s:
-    heap.pop_min()
-  heap.push(f)
-return heap.size()
+function egyptian(a,b):
+  terms = []
+  while a > 0:
+    x = ceil(b / a)
+    terms.append(x)
+    a, b = a*x - b, b*x
+    g = gcd(a,b); a//=g; b//=g
+  return terms
 ```
 
-**Complexity.** O(n log n).
+**Correctness.** Because `x = ceil(b/a)`, `1/x ≤ a/b`. The remainder is non‑negative and strictly smaller. Denominators strictly increase, so fractions are distinct. The telescoping sum reconstructs `a/b`.
+
+**Example:** `7/15` → `x=3` ⇒ `7/15 − 1/3 = 2/15`; `x=8` ⇒ `2/15 − 1/8 = 1/120`; `x=120` ⇒ done. So `7/15 = 1/3 + 1/8 + 1/120`.
+
+**Complexity.** Polynomial in bit‑length of inputs (though expansions can be long in worst cases).
 
 ---
 
-## 14) Huffman Coding
+## 10) Antenna Placement (Maximize Minimum Distance)
 
-**Problem.** Given symbol frequencies f\_i, build a prefix‑free binary code minimizing expected code length sum f\_i \* depth\_i.
+**Problem.**
 
-**Greedy.** Repeatedly merge the two least‑frequent trees; make them siblings under a new parent whose weight is the sum. (Min‑heap.)
+* **Input.** Sorted positions `x₁ < … < xₙ` on a line and an integer `k` (1 ≤ k ≤ n).
+* **Output.** Place `k` antennas on some of these positions to **maximize** the minimum distance `D` between any two consecutively placed antennas.
+* **Monotonicity.** If a distance `D` is feasible (you can place ≥ k), then any smaller distance is also feasible.
 
-**Proof sketch.** In some optimal tree, the two least frequent symbols are siblings at maximum depth (sibling property). Merging them reduces the instance and preserves optimality by induction. This is the same exchange used in the optimal‑merge pattern.
-
-**Pseudocode.** As in #4, but nodes are trees; record left/right to output codes.
-
-**Complexity.** O(n log n).
-
----
-
-## 15) Minimum Spanning Tree (Kruskal / Prim)
-
-**Problem.** Given connected, weighted, undirected graph, find an MST.
-
-**Greedy properties.**
-
-* **Cut property:** For any cut, the minimum‑weight edge crossing it is safe to add to *some* MST.
-* **Cycle property:** For any cycle, the maximum‑weight edge on it is not in *some* MST.
-
-**Kruskal.** Sort edges by weight; add an edge if it connects two different components (DSU). Correct by the cut property.
-
-**Prim.** Grow a tree from any root, always adding the lightest edge leaving the current tree (min‑key PQ). Correct by the cut property applied to the cut (tree, rest).
-
-**Complexities.** Kruskal: O(m log m) + near‑linear DSU. Prim: O(m log n) with binary heap; O(m + n log n) with Fibonacci heap.
-
----
-
-## 16) Egyptian Fractions (Greedy)
-
-**Problem.** For a rational 0 < a/b < 1, represent it as a sum of distinct unit fractions: a/b = sum 1/x\_k.
-
-**Greedy.** At each step take `x = ceil(b/a)` and subtract 1/x: set a/b := a/b - 1/x; repeat until numerator 0.
-
-**Proof idea.** `1/x <= a/b` by definition of ceiling; the remainder (a/b - 1/x) is non‑negative and smaller with strictly increasing denominators, guaranteeing termination. The representation uses distinct unit fractions because denominators strictly grow.
+**Greedy solution (feasibility + binary search).** For a fixed `D`, place at `x₁`, then always at the **leftmost position** `≥ last + D`. If you place `≥ k` antennas, `D` is feasible; otherwise not. Binary‑search the largest feasible `D`.
 
 **Pseudocode.**
 
 ```text
-frac = (a,b)
-terms = []
-while a != 0:
-  x = ceil(b/a)
-  terms.append(x)
-  a, b = a*x - b, b*x     # reduce fraction by gcd if desired
-return terms   # represents sum 1/x
-```
-
-**Complexity.** Number of terms is O(log b) in many cases; arithmetic per step is polylog; overall polynomial in input size.
-
----
-
-## 17) Antenna Placement (Maximize Minimum Distance)
-
-**Problem.** Given sorted candidate positions x\_1 < ... < x\_n on a line, place k antennas to maximize the minimum pairwise distance D.
-
-**Greedy feasibility + parametric search.** For a fixed D, greedy test: place first antenna at x\_1, then always place the next at the leftmost position >= last + D. This maximizes the count placed under distance D. Then binary‑search D over the coordinate range.
-
-**Correctness.** The feasibility greedy is optimal: if we ever skip an available earliest position, we can shift left without hurting feasibility, thus never placing *more* antennas than greedy. Hence greedy achieves the maximum possible count for that D. Binary search finds the greatest feasible D.
-
-**Pseudocode.**
-
-```text
-can_place(D):
-  count=1; last=x[1]
-  for i=2..n:
+function can_place(D):
+  count = 1
+  last = x[1]
+  for i in 2..n:
     if x[i] - last >= D:
-      count += 1; last = x[i]
+      count += 1
+      last = x[i]
   return count >= k
 
-lo=0; hi=x[n]-x[1]
+lo = 0
+hi = x[n] - x[1]
 while lo < hi:
-  mid = ceil((lo+hi+1)/2)  # upper mid
-  if can_place(mid):
-    lo = mid
-  else:
-    hi = mid-1
+  mid = ceil((lo + hi) / 2)
+  if can_place(mid): lo = mid
+  else: hi = mid - 1
 return lo
 ```
 
-**Complexity.** Each feasibility scan O(n); binary search O(log range) steps → O(n log range).
+**Correctness.** (**Staying‑ahead**) The greedy chooser never reduces the number placed for a fixed `D`: if you ever skip the earliest feasible spot, you cannot place **more** later. Because feasibility in `D` is monotone, binary search finds the maximal `D`.
+
+**Example:** `x=[1,2,4,8,9], k=3` → `D=4` infeasible (only 2 placed), `D=3` feasible (place at 1,4,8). Best `D = 3`.
+
+**Complexity.** `O(n log (xₙ−x₁))`.
 
 ---
 
-## 18) Scheduling With Linear Tardiness Penalties — limits of Greedy
+## 11) Scheduling with Linear Tardiness (`Σ wᵢ·max(0, Cᵢ−dᵢ)`) — Limits of Greedy
 
-**Problem.** Minimize sum w\_i \* max(0, C\_i - d\_i) on one machine.
+**Problem.**
 
-**Reality check.** This problem (1||sum w\_i T\_i) is NP‑hard in general; no simple greedy is optimal for all inputs.
+* **Input.** One machine; job `i` has processing `pᵢ>0`, deadline `dᵢ`, weight `wᵢ≥0`.
+* **Timing.** A schedule yields completion times `Cᵢ`.
+* **Key terms.**
 
-**Counterexamples to natural greedies.**
+  * **Lateness:** `Lᵢ = Cᵢ − dᵢ` (can be negative if early).
+  * **Tardiness:** `Tᵢ = max(0, Lᵢ) = max(0, Cᵢ − dᵢ)` → only counts positive lateness; being early gives 0, not negative reward.
+* **Objective.** Minimize `Σ wᵢ Tᵢ`.
 
-* EDD (by deadlines) can be suboptimal when a very heavy job slightly late outweighs many light on‑time jobs.
-* Smith’s rule (by w/p) is for sum w\_i C\_i, not tardiness; it can schedule late heavy jobs early and increase tardiness sum.
+**Reality.** The problem `1||ΣwᵢTᵢ` is **NP‑hard**. Natural greedies fail:
 
-**What helps.** Exact algorithms use DP or branch‑and‑bound for small n; approximation/heuristics exist (e.g., local search around EDD, or dyn‑prog on small total processing time). Greedy remains a strong heuristic but without optimality guarantee.
+* **EDD** (deadline↑) optimizes `L_max`, not `ΣT`.
+* **Smith’s rule** (w/p↓) optimizes `Σ wᵢ Cᵢ`, not `ΣT`.
+  Small instances can be constructed where either order is suboptimal for `ΣT`.
+
+**Example (compute tardiness):** Suppose `(p,d,w)` = A(3,3,10), B(2,2,1), C(2,4,1). Order `A,B,C`: completion `C=[3,5,7]` → `T=[max(0,0), max(0,3), max(0,3)] = [0,3,3]` → `ΣwT = 0*10 + 1*3 + 1*3 = 6`. Try `B,A,C`: `C=[2,5,7]` → `T=[0,2,3]` → `ΣwT = 0 + 20 + 3 = 23` (worse). This shows sensitivity to order and weights; neither EDD nor Smith’s rule systematically wins for `ΣT`.
+
+**What actually works.** DP in `O(n·Σpᵢ)` for small `Σpᵢ`, branch‑and‑bound, or heuristics (e.g., local search around EDD, Wilkerson–Irwin) with no global guarantee.
+
+**Complexity.** NP‑hard ⇒ no known polytime exact algorithm unless P=NP.
 
 ---
 
-## 19) Interval Cover With Capacities — a Greedy that works
+## 12) Interval Cover with Capacities (Discrete Time)
 
-**Problem.** Each interval \[s\_i, f\_i) is a guard shift; choosing one guard contributes capacity 1 over its interval. Demand function D(t) specifies how many guards are required at every time t (integer time points). Choose the smallest number of guards (intervals) so that for every integer time t, the number of chosen intervals covering t is at least D(t).
+**Problem.**
 
-**Greedy.** Sweep t from left to right. Maintain a max‑heap of chosen intervals’ end times that cover t. If current coverage < D(t), add more guards among intervals that start at or before t by choosing those with **latest end times** first (so they help cover future times the most). Also drop from the heap any chosen intervals whose end < t (they no longer cover t).
+* **Input.** Discrete time points `T = {t₁ < … < t_m}`. Each shift `i` is an interval `[sᵢ, fᵢ)` contributing **capacity 1** at every `t` with `sᵢ ≤ t < fᵢ`. A demand function `D(t)` (nonnegative integers) specifies how many units of capacity are required at each `t`.
+* **Feasibility.** The instance is feasible only if, for every `t`, at least `D(t)` shifts exist that cover `t`. (The greedy below assumes feasibility; otherwise it will discover no available shift at some deficit.)
+* **Goal (output).** Choose the **fewest shifts** so that, for every `t ∈ T`, the number of chosen shifts covering `t` is at least `D(t)`.
+* **Analogy.** Staffing: choose the smallest number of worker shifts so that each hour has enough workers on duty.
 
-**Proof (staying‑ahead / exchange).** Suppose at time t we must add r new guards. Picking the r intervals with latest ends gives coverage at least as good as any other r choices at t and never reduces feasibility later; if some solution chose a shorter‑ending interval at t, swapping it with a longer‑ending interval we had available cannot hurt current coverage and only helps later times. Repeating locally yields a globally optimal solution.
+**Greedy solution (latest‑end at each deficit).** Sweep `t` from left to right. Maintain:
+
+* `active`: max‑heap by end time of **chosen** shifts that currently cover `t`;
+* `avail`: max‑heap by end time of **candidate** shifts with `sᵢ ≤ t < fᵢ` not yet chosen.
+  If `|active| < D(t)`, repeatedly **choose** from `avail` the shift with the **latest end** (maximizes coverage of future times) until coverage meets `D(t)`. As `t` advances, remove from `active` any chosen shift that no longer covers `t`.
 
 **Pseudocode.**
 
 ```text
-# inputs: intervals sorted by start; discrete times T; demand D[t]
-active = MaxHeapByEnd()   # end times of chosen intervals covering t
-avail  = MaxHeapByEnd()   # intervals with s_i <= t < f_i not yet chosen
+I = sorted(intervals, key=start)
+active = MaxHeapByEnd()
+avail  = MaxHeapByEnd()
 chosen = []
 i = 0
 for t in T:
-  while i < n and intervals[i].s <= t:   # new candidates become available
-    if intervals[i].f > t:
-      avail.push(intervals[i])
+  # add new candidates that have started but not yet finished
+  while i < n and I[i].start <= t:
+    if I[i].finish > t: avail.push(I[i])
     i += 1
-  while active.peek_end() <= t:
+  # drop chosen shifts that have expired
+  while active and active.max_end <= t:
     active.pop()
+  # fill any deficit using latest-ending candidates
   need = D[t] - active.size()
   while need > 0:
-    x = avail.pop_max_end()
+    x = avail.pop_max()      # if none exists, instance is infeasible
     chosen.append(x)
     active.push(x)
     need -= 1
 return chosen
 ```
 
-**Complexity.** Sorting O(n log n) plus O((n + |T|) log n) heap ops.
+**Correctness.** (**Staying‑ahead/exchange**) Suppose at time `t` you must add `r` shifts. Choosing the `r` **latest‑ending** candidates gives coverage at least as good now and for all future times `u ≥ t` as any other `r` choices. If some optimal solution picked a shorter‑ending shift while a longer one was available, swapping them cannot decrease coverage at any `u ≥ t` and may increase it; repeating such swaps transforms any optimum into the greedy choice without increasing cardinality. Thus the greedy set is minimum.
 
-**Remark.** This is the capacitated analogue of choosing “as long as possible” intervals for point coverage; for D(t)=1 it reduces to the classic greedy for covering points with intervals.
+**Example:** `T={1..6}`, `D=[1,2,1,2,1,0]`. Shifts: `A=[1,4)`, `B=[2,5)`, `C=[3,6)`, `D=[1,3)`, `E=[4,6)`. At `t=1`, need 1 → choose latest of `{A,D}` → `A(4)`. At `t=2`, need 2 → add latest of `{B,D}` → `B(5)`. At `t=4`, `A` expires; need 2 → choose latest of `{B,E}` → `E(6)`. Final chosen `{A,B,E}` (3 shifts) meets all demands and is minimal.
 
----
-
-## 20) When Greedy Fails
-
-**(a) 0/1‑Knapsack — ratio greedy is not optimal.** Items: (v,w) = (100,51), (100,51), (99,50). Capacity 100. Ratio greedy takes the two 100/51 items (total w=102 > 100) so it picks one 100/51 and then 99/50 cannot fit; value=100. Optimal is the two lighter items (100/51 + 99/50 = 149 value, exactly 101? Adjust weights: use (100,50),(100,50),(99,51) with capacity 100 → ratio greedy picks 100+? A simpler standard: items (v,w): (60,10),(100,20),(120,30), capacity 50: ratio greedy picks all by ratio equal? Better counterexample:
-Items: (v,w)=(value,weight) = (100,60),(90,50),(60,30), W=80.
-Ratio greedy picks (60,30) (ratio 2.0) then (90,50) (ratio 1.8) => total 150.
-Optimal is (100,60)+(60,30)=160 (fits 90) – adjust W to 90; with W=90, ratio greedy 150 vs optimal 160. The point: ratio greedy can be suboptimal; dynamic programming is needed for exact optimum.
-
-**(b) Two‑machine makespan (P2||C\_max).** Greedy LPT (longest processing time first) is **not** always optimal (though it has a 4/3 approximation bound). Counterexample: jobs \[4,3,3,3]. LPT puts 4 on M1, 3 on M2, next 3 on M2 (M2=6), last 3 on M1 (M1=7) → makespan 7. Optimal is (4+3)=7 and (3+3)=6 — here it ties; tweak: jobs \[8,7,6,5,4]. LPT gives (8+5)=13, (7+6+4)=17, makespan 17; optimal is (8+7)=15, (6+5+4)=15. So greedy can lose.
-
-**Takeaway.** Greedy is powerful when a problem has a matroid/greedy‑choice structure (e.g., activity selection, MST, Huffman). When that structure is absent, either careful counterexamples exist or the problem is NP‑hard; then use DP/approximation.
- 
+**Complexity.** Sort `O(n log n)`; across all `t`, heap ops `O((n+m) log n)`.
