@@ -1,9 +1,6 @@
 # Greedy Algorithms – 20 Exercises With Full Solutions
 
-> **Note on notation:** I keep formulas GitHub‑friendly (plain text), e.g., write `sum w_i C_i` instead of LaTeX. Each problem includes: statement, algorithm, proof idea (exchange/cut/greedy‑choice), pseudocode, and complexity.
-
----
-
+ 
 ## Table of Contents
 
 1. Activity Selection (Maximum Non‑Overlapping Intervals)
@@ -465,9 +462,4 @@ Optimal is (100,60)+(60,30)=160 (fits 90) – adjust W to 90; with W=90, ratio g
 **(b) Two‑machine makespan (P2||C\_max).** Greedy LPT (longest processing time first) is **not** always optimal (though it has a 4/3 approximation bound). Counterexample: jobs \[4,3,3,3]. LPT puts 4 on M1, 3 on M2, next 3 on M2 (M2=6), last 3 on M1 (M1=7) → makespan 7. Optimal is (4+3)=7 and (3+3)=6 — here it ties; tweak: jobs \[8,7,6,5,4]. LPT gives (8+5)=13, (7+6+4)=17, makespan 17; optimal is (8+7)=15, (6+5+4)=15. So greedy can lose.
 
 **Takeaway.** Greedy is powerful when a problem has a matroid/greedy‑choice structure (e.g., activity selection, MST, Huffman). When that structure is absent, either careful counterexamples exist or the problem is NP‑hard; then use DP/approximation.
-
----
-
-## End
-
-If you want this as a download‑ready `.md` file or split into handouts (easy/intermediate/advanced), tell me and I’ll export accordingly (and can add more worked examples).
+ 
