@@ -6,7 +6,7 @@
 5. **Solution (Pseudocode)**
 6. **Complexity**
  
-````markdown
+
 # Dynamic Programming — 18 Classic Problems with Full Solutions
 
 ## 1) 0/1 Knapsack Problem
