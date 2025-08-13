@@ -1,6 +1,6 @@
  # Dynamic Programming Practice Problems
 
-This document contains **10 classic Dynamic Programming problems**.  
+
 Each problem includes:
 
 1. Problem Explanation + Example  
